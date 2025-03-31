@@ -23,17 +23,14 @@ namespace TentecimApi.Controllers
         #endregion
 
         #region Register Metodu - Admin Kayıt + E-Posta Doğrulama
-        
-       
+
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] PendingUser user)
         {
             try
             {
-                // 🛡️ 1. Giriş validasyonu
-                if (string.IsNullOrWhiteSpace(user.Username))
-                    return BadRequest("Kullanıcı adı boş olamaz.");
-
+                // 🛡️ 1. Temel validasyonlar
                 if (string.IsNullOrWhiteSpace(user.Email))
                     return BadRequest("E-posta boş olamaz.");
 
@@ -43,12 +40,19 @@ namespace TentecimApi.Controllers
                 if (string.IsNullOrWhiteSpace(user.Role))
                     return BadRequest("Rol boş olamaz.");
 
-                if (user.Role.ToLower() == "admin" && string.IsNullOrWhiteSpace(user.CompanyName))
-                    return BadRequest("Admin kullanıcıları için firma adı (company_name) zorunludur.");
+                // 🎯 Username boşsa ama role = "user" ise yine de ilerlenebilir (kod sonrası girilecek)
+                if (user.Role.ToLower() == "admin")
+                {
+                    if (string.IsNullOrWhiteSpace(user.Username))
+                        return BadRequest("Admin kullanıcıları için kullanıcı adı zorunludur.");
+
+                    if (string.IsNullOrWhiteSpace(user.CompanyName))
+                        return BadRequest("Firma adı boş olamaz.");
+                }
 
                 var client = _supabaseService.GetClient();
 
-                // 🔍 2. E-posta daha önce kayıtlı mı? (pending_users tablosunda)
+                // 🔍 2. E-posta daha önce kayıtlı mı? (pending_users)
                 var existingPending = await client
                     .From<PendingUser>()
                     .Where(p => p.Email == user.Email)
@@ -57,7 +61,7 @@ namespace TentecimApi.Controllers
                 if (existingPending.Models.Count > 0)
                     return BadRequest("Bu e-posta zaten onay bekleyenler listesinde var.");
 
-                // 🔍 3. E-posta daha önce onaylanmış mı? (users tablosunda)
+                // 🔍 3. Daha önce onaylanmış mı? (users)
                 var existingUser = await client
                     .From<User>()
                     .Where(p => p.Email == user.Email)
@@ -66,13 +70,13 @@ namespace TentecimApi.Controllers
                 if (existingUser.Models.Count > 0)
                     return BadRequest("Bu e-posta ile zaten kayıt yapılmış.");
 
-                // 🔐 4. Supabase Auth ile e-posta doğrulamalı hesap oluştur
+                // 🔐 4. Supabase Auth ile kayıt
                 var signUpResponse = await client.Auth.SignUp(user.Email, user.Password);
 
                 if (signUpResponse.User == null)
                     return BadRequest("Kayıt sırasında bir hata oluştu (Auth).");
 
-                // 🧾 5. UUID boş kalmalı (Supabase otomatik oluşturur)
+                // 🧾 5. UUID ve timestamp
                 user.Id = default;
                 user.CreatedAt = DateTime.UtcNow;
 

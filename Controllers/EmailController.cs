@@ -24,18 +24,30 @@ namespace TentecimApi.Controllers
         }
 
         // 📩 E-posta adresine doğrulama kodu gönder ve veritabanına kaydet
-     
-       
+
+
         [HttpPost("sendcode")]
         public async Task<IActionResult> SendCode([FromBody] EmailRequest request)
         {
             var client = _supabaseService.GetClient();
 
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                return BadRequest("E-posta adresi boş olamaz.");
+            }
+
             try
             {
-                // ✅ 1. E-posta daha önce kayıtlı mı kontrol et
-                var inPending = await client.From<PendingUser>().Where(x => x.Email == request.Email).Get();
-                var inUsers = await client.From<User>().Where(x => x.Email == request.Email).Get();
+                // ✅ 1. E-posta zaten sistemde var mı?
+                var inPending = await client
+                    .From<PendingUser>()
+                    .Filter("email", Supabase.Postgrest.Constants.Operator.Equals, request.Email)
+                    .Get();
+
+                var inUsers = await client
+                    .From<User>()
+                    .Filter("email", Supabase.Postgrest.Constants.Operator.Equals, request.Email)
+                    .Get();
 
                 if (inPending.Models.Count > 0 || inUsers.Models.Count > 0)
                 {
@@ -44,27 +56,17 @@ namespace TentecimApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Veritabanı kontrol hatası: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
+                return StatusCode(500, $"Veritabanı kontrol hatası: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
             }
 
-            string code;
-            DateTime createdAt;
-
-            try
-            {
-                // ✅ 2. Kod oluştur
-                code = new Random().Next(100000, 999999).ToString();
-                createdAt = DateTime.UtcNow;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Kod oluşturulurken hata: {ex.Message}");
-            }
+            // ✅ 2. Kod oluştur
+            var code = new Random().Next(100000, 999999).ToString();
+            var createdAt = DateTime.UtcNow;
 
             try
             {
-                // ✅ 3. Kod veritabanına kaydediliyor
-                var result = await client
+                // ✅ 3. Kod veritabanına kaydet
+                await client
                     .From<EmailCode>()
                     .Insert(new List<EmailCode>
                     {
@@ -78,12 +80,12 @@ namespace TentecimApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Kod veritabanına eklenirken hata oluştu: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
+                return StatusCode(500, $"Kod veritabanına eklenirken hata oluştu: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
             }
 
             try
             {
-                // ✅ 4. Mail gönderimi
+                // ✅ 4. Kod e-posta ile gönder
                 var smtpClient = new SmtpClient("smtp.gmail.com")
                 {
                     Port = 587,
@@ -95,7 +97,7 @@ namespace TentecimApi.Controllers
                 {
                     From = new MailAddress("524esrasahin@gmail.com", "TENTECIMAPP"),
                     Subject = "Doğrulama Kodunuz",
-                    Body = $"Merhaba,\n\nTENTECIMAPP Doğrulama kodunuz: {code}\n\nBu kod 5 dakika içinde geçerlidir.",
+                    Body = $"Merhaba,\n\nTENTECIMAPP doğrulama kodunuz: {code}\n\nBu kod 5 dakika içinde geçerlidir.",
                     IsBodyHtml = false,
                 };
 
@@ -106,10 +108,9 @@ namespace TentecimApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
+                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
             }
         }
-
 
 
 

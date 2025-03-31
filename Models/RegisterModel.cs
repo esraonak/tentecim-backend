@@ -2,27 +2,21 @@
 {
     public class RegisterModel
     {
-        public string Username { get; set; }
+        public string Username { get; set; }      // Ad soyad (user için isteğe bağlı)
         public string Email { get; set; }
         public string Password { get; set; }
         public string Phone { get; set; }
-        public string Role { get; set; } // "admin" veya "user"
+        public string Role { get; set; }          // "admin" veya "user"
+        public string CompanyName { get; set; }   // admin için zorunlu olabilir
 
         /// <summary>
-        /// Bu fonksiyon, modeldeki zorunlu alanların dolu olup olmadığını kontrol eder.
-        /// Hatalı durum varsa `errorMessage` parametresiyle döner.
+        /// Formdan gelen verilerin doğruluğunu kontrol eder
         /// </summary>
         public bool IsValid(out string errorMessage)
         {
-            if (string.IsNullOrWhiteSpace(Username))
-            {
-                errorMessage = "Kullanıcı adı boş olamaz.";
-                return false;
-            }
-
             if (string.IsNullOrWhiteSpace(Email))
             {
-                errorMessage = "E-posta boş olamaz.";
+                errorMessage = "E-posta adresi boş olamaz.";
                 return false;
             }
 
@@ -34,14 +28,23 @@
 
             if (string.IsNullOrWhiteSpace(Role))
             {
-                errorMessage = "Rol seçimi zorunludur.";
+                errorMessage = "Rol seçimi yapılmalı.";
                 return false;
             }
 
-            if (Role.ToLower() == "admin" && string.IsNullOrWhiteSpace(Phone))
+            if (Role.ToLower() == "admin")
             {
-                errorMessage = "Admin kullanıcıları için telefon numarası zorunludur.";
-                return false;
+                if (string.IsNullOrWhiteSpace(CompanyName))
+                {
+                    errorMessage = "Firma adı boş olamaz.";
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(Username))
+                {
+                    errorMessage = "Admin için kullanıcı adı boş olamaz.";
+                    return false;
+                }
             }
 
             errorMessage = null;

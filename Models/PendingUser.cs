@@ -8,9 +8,7 @@ namespace TentecimApi.Models
     public class PendingUser : BaseModel
     {
         [PrimaryKey("id", false)]
-        public Guid Id { get; set; } 
-
-
+        public Guid Id { get; set; }
 
         [Column("username")]
         public string Username { get; set; }
@@ -29,5 +27,48 @@ namespace TentecimApi.Models
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Kullanıcı bilgilerinin geçerli olup olmadığını kontrol eder.
+        /// </summary>
+        public bool IsValid(out string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                errorMessage = "E-posta boş olamaz.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(Password))
+            {
+                errorMessage = "Şifre boş olamaz.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(Role))
+            {
+                errorMessage = "Rol boş olamaz.";
+                return false;
+            }
+
+            if (Role.ToLower() == "admin")
+            {
+                if (string.IsNullOrWhiteSpace(Username))
+                {
+                    errorMessage = "Admin kullanıcıları için kullanıcı adı zorunludur.";
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(CompanyName))
+                {
+                    errorMessage = "Firma adı boş olamaz.";
+                    return false;
+                }
+            }
+
+            // user rolünde username boş olabilir, sonradan girilecek
+            errorMessage = null;
+            return true;
+        }
     }
 }

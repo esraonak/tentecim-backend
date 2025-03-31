@@ -54,8 +54,7 @@
               "RelativeToolTip": "Models\\VerifyRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:35:53.561Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:35:53.561Z"
             },
             {
               "$type": "Document",
@@ -67,8 +66,7 @@
               "RelativeToolTip": "Models\\UserModel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:35:50.18Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:35:50.18Z"
             },
             {
               "$type": "Document",
@@ -80,8 +78,7 @@
               "RelativeToolTip": "Models\\RegisterModel.cs",
               "ViewState": "AgIAABUAAAAAAAAAAAAcwDMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:35:47.596Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:35:47.596Z"
             },
             {
               "$type": "Document",
@@ -93,8 +90,7 @@
               "RelativeToolTip": "Models\\PendingUser.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAcwCEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:35:18.636Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:35:18.636Z"
             },
             {
               "$type": "Document",
@@ -106,8 +102,7 @@
               "RelativeToolTip": "Models\\EmailRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:35:15.762Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:35:15.762Z"
             },
             {
               "$type": "Document",
@@ -119,8 +114,7 @@
               "RelativeToolTip": "Models\\EmailCode.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T14:34:17.264Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T14:34:17.264Z"
             },
             {
               "$type": "Document",
@@ -130,7 +124,7 @@
               "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
               "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\AuthController.cs",
               "RelativeToolTip": "Controllers\\AuthController.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAAcwCEAAAA9AAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-31T12:02:36.074Z",
               "EditorCaption": ""
@@ -145,8 +139,7 @@
               "RelativeToolTip": "Controllers\\EmailController.cs",
               "ViewState": "AgIAACoAAAAAAAAAAAAAABsAAAAHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-31T12:02:01.77Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-03-31T12:02:01.77Z"
             }
           ]
         }
