@@ -8,7 +8,8 @@ namespace TentecimApi.Models
     public class PendingUser : BaseModel
     {
         [PrimaryKey("id", false)]
-        public int Id { get; set; }
+        public Guid Id { get; set; } 
+
 
 
         [Column("username")]
