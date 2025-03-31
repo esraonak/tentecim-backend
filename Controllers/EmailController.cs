@@ -11,6 +11,7 @@ using System.Net.Mail;
 
 namespace TentecimApi.Controllers
 {
+    
     [ApiController]
     [Route("api/[controller]")]
     public class EmailController : ControllerBase
@@ -77,7 +78,7 @@ namespace TentecimApi.Controllers
 
 
         // ✅ Kod Doğrulama (email + code ile)
-        [HttpPost("verify-code")]
+        [HttpPost("verify")]
         public async Task<IActionResult> VerifyCode([FromBody] VerifyRequest request)
         {
             var client = _supabaseService.GetClient();
