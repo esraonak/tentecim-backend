@@ -53,7 +53,7 @@ if (app.Environment.IsDevelopment())
 
 // ✅ Middleware sıralaması önemli
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+
 app.UseAuthorization();
 
 app.MapControllers(); // Tüm Controller'ları aktif et
