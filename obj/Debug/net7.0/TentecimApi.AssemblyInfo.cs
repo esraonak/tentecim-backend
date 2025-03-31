@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TentecimApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d439675d0175f39097b2878bb11fcad52c82f5e4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+60007f9d77493c94b327d8f62d27488d955dc07b")]
 [assembly: System.Reflection.AssemblyProductAttribute("TentecimApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TentecimApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

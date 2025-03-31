@@ -24,14 +24,26 @@ namespace TentecimApi.Controllers
         }
 
         // 📩 E-posta adresine doğrulama kodu gönder ve veritabanına kaydet
+     
         [HttpPost("sendcode")]
         public async Task<IActionResult> SendCode([FromBody] EmailRequest request)
         {
             var client = _supabaseService.GetClient();
+
+            // ✅ 1. Bu e-posta zaten daha önce kayıtlı mı kontrol et (pending_users veya users tablosunda olabilir)
+            
+            var inPending = await client.From<PendingUser>().Where(x => x.Email == request.Email).Get();
+            var inUsers = await client.From<User>().Where(x => x.Email == request.Email).Get();
+            if (inPending.Models.Count > 0 || inUsers.Models.Count > 0)
+            {
+                return BadRequest("Bu e-posta adresi zaten sistemde mevcut. Lütfen giriş yapın.");
+            }
+
+            // ✅ 2. Kod oluştur
             var code = new Random().Next(100000, 999999).ToString();
             var createdAt = DateTime.UtcNow;
 
-            // Supabase'e kodu kaydet
+            // ✅ 3. Veritabanına ekle
             var result = await client
                 .From<EmailCode>()
                 .Insert(new List<EmailCode>
@@ -44,17 +56,14 @@ namespace TentecimApi.Controllers
             }
                 });
 
-            // ✅ SMTP AYARLARI
-            var smtpClient = new SmtpClient("smtp.gmail.com") // Örneğin Gmail
+            // ✅ 4. Mail gönder
+            var smtpClient = new SmtpClient("smtp.gmail.com")
             {
                 Port = 587,
                 Credentials = new NetworkCredential("524esrasahin@gmail.com", "tbtdfeftkvmzihyy"),
                 EnableSsl = true,
             };
-            // ✅ Marka adı tanımlı bir gönderim
-       
-           
-            // ✅ E-POSTA GÖNDER
+
             var mailMessage = new MailMessage
             {
                 From = new MailAddress("524esrasahin@gmail.com", "TENTECIMAPP"),
@@ -75,6 +84,7 @@ namespace TentecimApi.Controllers
                 return StatusCode(500, $"E-posta gönderilemedi: {ex.Message}");
             }
         }
+
 
 
         // ✅ Kod Doğrulama (email + code ile)

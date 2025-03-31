@@ -23,7 +23,7 @@ namespace TentecimApi.Controllers
         #endregion
 
         #region Register Metodu - Admin Kayıt + E-Posta Doğrulama
-        [HttpPost("register")]
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] PendingUser user)
         {
