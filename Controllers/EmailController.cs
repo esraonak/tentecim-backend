@@ -25,65 +25,91 @@ namespace TentecimApi.Controllers
 
         // 📩 E-posta adresine doğrulama kodu gönder ve veritabanına kaydet
      
+       
         [HttpPost("sendcode")]
         public async Task<IActionResult> SendCode([FromBody] EmailRequest request)
         {
             var client = _supabaseService.GetClient();
 
-            // ✅ 1. Bu e-posta zaten daha önce kayıtlı mı kontrol et (pending_users veya users tablosunda olabilir)
-            
-            var inPending = await client.From<PendingUser>().Where(x => x.Email == request.Email).Get();
-            var inUsers = await client.From<User>().Where(x => x.Email == request.Email).Get();
-            if (inPending.Models.Count > 0 || inUsers.Models.Count > 0)
+            try
             {
-                return BadRequest("Bu e-posta adresi zaten sistemde mevcut. Lütfen giriş yapın.");
-            }
+                // ✅ 1. E-posta daha önce kayıtlı mı kontrol et
+                var inPending = await client.From<PendingUser>().Where(x => x.Email == request.Email).Get();
+                var inUsers = await client.From<User>().Where(x => x.Email == request.Email).Get();
 
-            // ✅ 2. Kod oluştur
-            var code = new Random().Next(100000, 999999).ToString();
-            var createdAt = DateTime.UtcNow;
-
-            // ✅ 3. Veritabanına ekle
-            var result = await client
-                .From<EmailCode>()
-                .Insert(new List<EmailCode>
+                if (inPending.Models.Count > 0 || inUsers.Models.Count > 0)
                 {
-            new EmailCode
-            {
-                Email = request.Email,
-                Code = code,
-                CreatedAt = createdAt
+                    return BadRequest("Bu e-posta adresi zaten sistemde mevcut. Lütfen giriş yapın.");
+                }
             }
-                });
-
-            // ✅ 4. Mail gönder
-            var smtpClient = new SmtpClient("smtp.gmail.com")
+            catch (Exception ex)
             {
-                Port = 587,
-                Credentials = new NetworkCredential("524esrasahin@gmail.com", "tbtdfeftkvmzihyy"),
-                EnableSsl = true,
-            };
+                return StatusCode(500, $"Veritabanı kontrol hatası: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
+            }
 
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress("524esrasahin@gmail.com", "TENTECIMAPP"),
-                Subject = "Doğrulama Kodunuz",
-                Body = $"Merhaba,\n\nTENTECIMAPP Doğrulama kodunuz: {code}\n\nBu kod 5 dakika içinde geçerlidir.",
-                IsBodyHtml = false,
-            };
-
-            mailMessage.To.Add(request.Email);
+            string code;
+            DateTime createdAt;
 
             try
             {
+                // ✅ 2. Kod oluştur
+                code = new Random().Next(100000, 999999).ToString();
+                createdAt = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Kod oluşturulurken hata: {ex.Message}");
+            }
+
+            try
+            {
+                // ✅ 3. Kod veritabanına kaydediliyor
+                var result = await client
+                    .From<EmailCode>()
+                    .Insert(new List<EmailCode>
+                    {
+                new EmailCode
+                {
+                    Email = request.Email,
+                    Code = code,
+                    CreatedAt = createdAt
+                }
+                    });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Kod veritabanına eklenirken hata oluştu: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
+            }
+
+            try
+            {
+                // ✅ 4. Mail gönderimi
+                var smtpClient = new SmtpClient("smtp.gmail.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential("524esrasahin@gmail.com", "tbtdfeftkvmzihyy"),
+                    EnableSsl = true,
+                };
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress("524esrasahin@gmail.com", "TENTECIMAPP"),
+                    Subject = "Doğrulama Kodunuz",
+                    Body = $"Merhaba,\n\nTENTECIMAPP Doğrulama kodunuz: {code}\n\nBu kod 5 dakika içinde geçerlidir.",
+                    IsBodyHtml = false,
+                };
+
+                mailMessage.To.Add(request.Email);
+
                 await smtpClient.SendMailAsync(mailMessage);
                 return Ok("Kod e-posta ile gönderildi.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message}");
+                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message} - {(ex.InnerException != null ? ex.InnerException.Message : "")}");
             }
         }
+
 
 
 
