@@ -6,8 +6,8 @@ namespace TentecimApi.Models
     [Table("users")] // Supabase'deki tablo adı
     public class User : BaseModel
     {
-        [PrimaryKey("id", false)]
-        public Guid Id { get; set; }
+            [PrimaryKey("id", false)]
+            public Guid Id { get; set; }
 
         [Column("username")]
         public string Username { get; set; }

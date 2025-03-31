@@ -10,6 +10,7 @@ namespace TentecimApi.Models
         [PrimaryKey("id", false)]
         public int Id { get; set; }
 
+
         [Column("email")]
         public string Email { get; set; }
 

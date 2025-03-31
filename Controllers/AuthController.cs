@@ -24,14 +24,36 @@ namespace TentecimApi.Controllers
 
         #region Register Metodu - Admin Kayıt + E-Posta Doğrulama
         [HttpPost("register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] PendingUser user)
         {
             try
             {
-                // 1. Supabase bağlantısını al
                 var client = _supabaseService.GetClient();
 
-                // 2. Supabase Auth ile e-posta doğrulamalı hesap oluştur
+                // 1. E-posta daha önce kayıtlı mı? (pending_users tablosunda kontrol)
+                var existingPending = await client
+                    .From<PendingUser>()
+                    .Where(p => p.Email == user.Email)
+                    .Get();
+
+                if (existingPending.Models.Count > 0)
+                {
+                    return BadRequest("Bu e-posta zaten onay bekleyenler listesinde var.");
+                }
+
+                // 2. E-posta daha önce onaylanmış mı? (users tablosunda kontrol)
+                var existingUser = await client
+                    .From<User>()
+                    .Where(p => p.Email == user.Email)
+                    .Get();
+
+                if (existingUser.Models.Count > 0)
+                {
+                    return BadRequest("Bu e-posta ile zaten kayıt yapılmış.");
+                }
+
+                // 3. Supabase Auth ile e-posta doğrulamalı hesap oluştur
                 var signUpResponse = await client.Auth.SignUp(user.Email, user.Password);
 
                 if (signUpResponse.User == null)
@@ -39,8 +61,10 @@ namespace TentecimApi.Controllers
                     return BadRequest("Kayıt sırasında bir hata oluştu (Auth).");
                 }
 
-                // 3. pending_users tablosuna kullanıcıyı kaydet (admin veya user)
-                user.CreatedAt = DateTime.UtcNow; // CreatedAt eklenmeli
+                // 4. Supabase’in otomatik UUID üretmesini sağla
+                user.Id = default;
+                user.CreatedAt = DateTime.UtcNow;
+
                 var insertResponse = await client
                     .From<PendingUser>()
                     .Insert(user);
@@ -53,7 +77,7 @@ namespace TentecimApi.Controllers
                     });
                 }
 
-                return BadRequest("Kayıt supabase veritabanına eklenemedi.");
+                return BadRequest("Kayıt veritabanına eklenemedi.");
             }
             catch (Exception ex)
             {
