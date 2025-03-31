@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "0JjM8PVsia6ixq4mlBRWKxscACg968J7RE9R0C+BpHw=",
+  "Source": "TentecimApi",
+  "BasePath": "_content/TentecimApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
