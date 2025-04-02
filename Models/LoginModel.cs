@@ -3,7 +3,7 @@
     public class LoginModel
     {
         public string Email { get; set; }            // Kullanıcının e-posta adresi
-        public string hashedPassword { get; set; }         // Düz metin şifre
+        public string Password { get; set; }         // Düz metin şifre
         public string Role { get; set; }             // superadmin / admin / user
 
         public bool RememberMe { get; set; }         // Beni hatırla kutucuğu (true/false)

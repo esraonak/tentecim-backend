@@ -155,26 +155,28 @@ namespace TentecimApi.Controllers
                 var existingUserResponse = await client
                     .From<TentecimApi.Models.User>()
                     .Filter("email", Operator.Equals, model.Email)
-                    .Filter("role", Operator.Equals, model.Role)
+                    .Filter("role", Operator.Equals, model.Role) // 👈 Bu çok önemli!
                     .Get();
 
                 var user = existingUserResponse.Models.FirstOrDefault();
+
                 if (user == null)
                 {
                     await LogLogin(model.Email, "failed", "E-posta ya da rol hatalı.");
                     return Unauthorized("E-posta ya da rol hatalı.");
                 }
 
-                // 🔐 2. Şifre doğrulaması (hash karşılaştırması)
+                // 🔐 2. Şifre doğrulaması (şifre düz, veritabanı hashli)
                 var hasher = new PasswordHasher<string>();
-                var result = hasher.VerifyHashedPassword(null, user.hashedPassword, model.hashedPassword);
+                var result = hasher.VerifyHashedPassword(null, user.hashedPassword, model.Password);
+
                 if (result == PasswordVerificationResult.Failed)
                 {
                     await LogLogin(model.Email, "failed", "Şifre hatalı.");
                     return Unauthorized("Şifre hatalı.");
                 }
 
-                // ✅ 3. Giriş başarılı, device hatırlanacaksa trusted_devices tablosuna kayıt
+                // ✅ 3. Giriş başarılı, cihaz tanımlanacaksa trusted_devices'a kayıt
                 if (model.RememberMe && !string.IsNullOrWhiteSpace(model.DeviceToken))
                 {
                     var existingDevice = await client
@@ -202,14 +204,14 @@ namespace TentecimApi.Controllers
                     }
                 }
 
-                // ✅ 4. Giriş başarılı logu
+                // 🧾 4. Giriş başarılı logu
                 await LogLogin(model.Email, "success", "Giriş başarılı.");
 
-                // 🧾 5. Giriş yanıtı
+                // ✅ 5. Yanıt
                 return Ok(new
                 {
                     message = "Giriş başarılı",
-                    token = Guid.NewGuid(),
+                    token = Guid.NewGuid(), // İleride JWT token üretilebilir
                     user = new
                     {
                         id = user.Id,
@@ -226,8 +228,8 @@ namespace TentecimApi.Controllers
             }
         }
 
-
         #endregion
+
 
         #region FORGOT PASSWORD - Şifre sıfırlama kodu gönderimi
 
