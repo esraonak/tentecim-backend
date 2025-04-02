@@ -4,18 +4,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DotNetEnv;
 using System.IO;
-using Microsoft.OpenApi.Models; // ✅ Swagger için gerekli
+using Microsoft.OpenApi.Models;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env.local");
 Env.Load(envPath); // .env.local dosyasını yükle
 
 var builder = WebApplication.CreateBuilder(args);
+
 // ✅ SMTP bilgilerini buradan okuyabilmek için appsettings.json yükleniyor
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
 // 🌐 Servisleri ekle
 builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // ✅ Swagger için gerekli
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -25,41 +28,42 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// ✅ CORS Politikası
+// ✅ CORS Politikası (Canlı ortam için Vercel domain tanımlı)
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder
-                .AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://tentecim-frontend.vercel.app",  // 🌍 Canlı frontend domainin
+                "http://localhost:3000"                  // 🧪 Lokal geliştirme
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
-
 
 var app = builder.Build();
 
-// ✅ Swagger Kullanımı (Geliştirme Ortamı)
+// ✅ Swagger sadece geliştirme ortamında çalışır
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Tentecim API v1");
-        options.RoutePrefix = "swagger"; // Swagger UI -> http://localhost:5032/swagger
+        options.RoutePrefix = "swagger";
     });
 }
 
 // ✅ Middleware sıralaması önemli
-app.UseCors("AllowAll");
-
+app.UseCors(MyAllowSpecificOrigins); // İlk sırada olmalı
 app.UseAuthorization();
-
 app.MapControllers(); // Tüm Controller'ları aktif et
 
-// ✅ Örnek endpoint
+// ✅ Örnek endpoint (geliştirme/test amaçlı)
 app.MapGet("/weatherforecast", () =>
 {
     var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
