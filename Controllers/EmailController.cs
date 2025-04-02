@@ -5,53 +5,50 @@ using TentecimApi.Models;
 using TentecimApi.Services;
 using System.Net;
 using System.Net.Mail;
-
-
+using Microsoft.Extensions.Configuration;
 #endregion
 
 namespace TentecimApi.Controllers
 {
-    
     [ApiController]
     [Route("api/[controller]")]
     public class EmailController : ControllerBase
     {
         private readonly SupabaseService _supabaseService;
+        private readonly IConfiguration _configuration; // 👈  appsettings.json erişimi için
 
-        public EmailController(SupabaseService supabaseService)
+        public EmailController(SupabaseService supabaseService, IConfiguration configuration)
         {
             _supabaseService = supabaseService;
+            _configuration = configuration;
         }
-
-        // 📩 E-posta adresine doğrulama kodu gönder ve veritabanına kaydet
-
 
         [HttpPost("sendcode")]
         public async Task<IActionResult> SendCode([FromBody] EmailRequest request)
         {
+            if (!request.IsValid(out var validationError))
+                return BadRequest(validationError);
+
             var client = _supabaseService.GetClient();
 
-            if (string.IsNullOrWhiteSpace(request.Email))
-            {
-                return BadRequest("E-posta adresi boş olamaz.");
-            }
-
+            // ✅ Aynı firmaya aynı e-posta daha önce kayıtlı mı?
             try
             {
-                // ✅ 1. E-posta zaten sistemde var mı?
-                var inPending = await client
+                var pending = await client
                     .From<PendingUser>()
                     .Filter("email", Supabase.Postgrest.Constants.Operator.Equals, request.Email)
+                    .Filter("firm_id", Supabase.Postgrest.Constants.Operator.Equals, request.FirmId.ToString())
                     .Get();
 
-                var inUsers = await client
+                var users = await client
                     .From<User>()
                     .Filter("email", Supabase.Postgrest.Constants.Operator.Equals, request.Email)
+                    .Filter("firm_id", Supabase.Postgrest.Constants.Operator.Equals, request.FirmId.ToString())
                     .Get();
 
-                if (inPending.Models.Count > 0 || inUsers.Models.Count > 0)
+                if (pending.Models.Count > 0 || users.Models.Count > 0)
                 {
-                    return BadRequest("Bu e-posta adresi zaten sistemde mevcut. Lütfen giriş yapın.");
+                    return BadRequest("Bu e-posta bu firmaya zaten kayıtlı.");
                 }
             }
             catch (Exception ex)
@@ -59,13 +56,25 @@ namespace TentecimApi.Controllers
                 return StatusCode(500, $"Veritabanı kontrol hatası: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
             }
 
-            // ✅ 2. Kod oluştur
+            // 🔁 1 dakikalık rate limit
+            var existingCode = await client
+                .From<EmailCode>()
+                .Filter("email", Supabase.Postgrest.Constants.Operator.Equals, request.Email)
+                .Order("created_at", Supabase.Postgrest.Constants.Ordering.Descending)
+                .Limit(1)
+                .Get();
+
+            if (existingCode.Models.Count > 0 && (DateTime.UtcNow - existingCode.Models[0].CreatedAt).TotalMinutes < 1)
+            {
+                return BadRequest("Lütfen 1 dakika sonra tekrar deneyin.");
+            }
+
+            // ✅ Kod oluştur ve kaydet
             var code = new Random().Next(100000, 999999).ToString();
             var createdAt = DateTime.UtcNow;
 
             try
             {
-                // ✅ 3. Kod veritabanına kaydet
                 await client
                     .From<EmailCode>()
                     .Insert(new List<EmailCode>
@@ -80,47 +89,50 @@ namespace TentecimApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Kod veritabanına eklenirken hata oluştu: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
+                return StatusCode(500, $"Kod eklenirken hata oluştu: {ex.Message}");
             }
 
+            // ✅ E-posta gönder
             try
             {
-                // ✅ 4. Kod e-posta ile gönder
+                var smtpUser = _configuration["Smtp:User"];
+                var smtpPass = _configuration["Smtp:Password"];
+
                 var smtpClient = new SmtpClient("smtp.gmail.com")
                 {
                     Port = 587,
-                    Credentials = new NetworkCredential("524esrasahin@gmail.com", "tbtdfeftkvmzihyy"),
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
                     EnableSsl = true,
                 };
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress("524esrasahin@gmail.com", "TENTECIMAPP"),
+                    From = new MailAddress(smtpUser, "TENTECIMAPP"),
                     Subject = "Doğrulama Kodunuz",
-                    Body = $"Merhaba,\n\nTENTECIMAPP doğrulama kodunuz: {code}\n\nBu kod 5 dakika içinde geçerlidir.",
+                    Body = $"Merhaba,\n\nTENTECIMAPP doğrulama kodunuz: {code}\n\nBu kod 5 dakika geçerlidir.",
                     IsBodyHtml = false,
                 };
 
                 mailMessage.To.Add(request.Email);
-
                 await smtpClient.SendMailAsync(mailMessage);
-                return Ok("Kod e-posta ile gönderildi.");
+
+                return Ok("Kod gönderildi.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message} - {(ex.InnerException?.Message ?? "")}");
+                return StatusCode(500, $"E-posta gönderilemedi: {ex.Message}");
             }
         }
 
 
-
-        // ✅ Kod Doğrulama (email + code ile)
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyCode([FromBody] VerifyRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Code))
+                return BadRequest("E-posta ve kod boş olamaz.");
+
             var client = _supabaseService.GetClient();
 
-            // Kodun doğru ve güncel olup olmadığını kontrol et
             var result = await client
                 .From<EmailCode>()
                 .Where(x => x.Email == request.Email && x.Code == request.Code)
@@ -137,6 +149,5 @@ namespace TentecimApi.Controllers
 
             return Ok("Kod doğrulandı.");
         }
-
     }
 }

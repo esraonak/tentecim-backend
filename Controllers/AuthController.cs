@@ -1,7 +1,13 @@
-﻿#region GEREKLİ USING TANIMLARI
+﻿#region USING
 using Microsoft.AspNetCore.Mvc; // ASP.NET Core MVC özelliklerini kullanmak için
 using TentecimApi.Services;     // SupabaseService'e erişim sağlamak için
-using TentecimApi.Models;       // User modeline erişim sağlamak için
+using TentecimApi.Models;       // User ve RegisterModel'e erişim sağlamak için
+using Supabase.Gotrue;          // Supabase Auth işlemleri için
+using static Supabase.Postgrest.Constants; // Supabase filtre sabitleri
+using Microsoft.AspNetCore.Identity;
+using System.Net.Mail;
+using System.Net;
+
 #endregion
 
 namespace TentecimApi.Controllers
@@ -12,96 +18,491 @@ namespace TentecimApi.Controllers
     public class AuthController : ControllerBase
     #endregion
     {
+        private readonly IConfiguration _configuration;
         #region DEPENDENCY INJECTION - SERVİS ALANI
         private readonly SupabaseService _supabaseService; // Supabase işlemleri için servis
 
-        // Constructor: DI (Dependency Injection) ile SupabaseService enjekte edilir
         public AuthController(SupabaseService supabaseService)
         {
             _supabaseService = supabaseService;
         }
         #endregion
 
-        #region Register Metodu - Admin Kayıt + E-Posta Doğrulama
+        #region REGISTER METODU - Yeni kullanıcı kaydı başlatılır (Admin/User)
 
-
+        /// <summary>
+        /// Yeni kullanıcı kaydı alır. Supabase Auth üzerinden kullanıcı oluşturur,
+        /// ardından pending_users tablosuna kayıt atar. (Admin veya User için)
+        /// </summary>
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] PendingUser user)
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             try
             {
-                // 🛡️ 1. Temel validasyonlar
-                if (string.IsNullOrWhiteSpace(user.Email))
-                    return BadRequest("E-posta boş olamaz.");
-
-                if (string.IsNullOrWhiteSpace(user.Password))
-                    return BadRequest("Şifre boş olamaz.");
-
-                if (string.IsNullOrWhiteSpace(user.Role))
-                    return BadRequest("Rol boş olamaz.");
-
-                // 🎯 Username boşsa ama role = "user" ise yine de ilerlenebilir (kod sonrası girilecek)
-                if (user.Role.ToLower() == "admin")
-                {
-                    if (string.IsNullOrWhiteSpace(user.Username))
-                        return BadRequest("Admin kullanıcıları için kullanıcı adı zorunludur.");
-
-                    if (string.IsNullOrWhiteSpace(user.CompanyName))
-                        return BadRequest("Firma adı boş olamaz.");
-                }
+                // 🛡️ 1. Validasyon (görsel akış adımlarına uygun kontrol)
+                if (!model.IsValid(out var validationMessage, step: 4))
+                    return BadRequest(validationMessage);
 
                 var client = _supabaseService.GetClient();
 
-                // 🔍 2. E-posta daha önce kayıtlı mı? (pending_users)
-                var existingPending = await client
-                    .From<PendingUser>()
-                    .Where(p => p.Email == user.Email)
-                    .Get();
-
-                if (existingPending.Models.Count > 0)
-                    return BadRequest("Bu e-posta zaten onay bekleyenler listesinde var.");
-
-                // 🔍 3. Daha önce onaylanmış mı? (users)
-                var existingUser = await client
-                    .From<User>()
-                    .Where(p => p.Email == user.Email)
-                    .Get();
-
-                if (existingUser.Models.Count > 0)
-                    return BadRequest("Bu e-posta ile zaten kayıt yapılmış.");
-
-                // 🔐 4. Supabase Auth ile kayıt
-                var signUpResponse = await client.Auth.SignUp(user.Email, user.Password);
-
-                if (signUpResponse.User == null)
-                    return BadRequest("Kayıt sırasında bir hata oluştu (Auth).");
-
-                // 🧾 5. UUID ve timestamp
-                user.Id = default;
-                user.CreatedAt = DateTime.UtcNow;
-
-                var insertResponse = await client
-                    .From<PendingUser>()
-                    .Insert(user);
-
-                if (insertResponse.Models != null)
+                // 🔍 2. pending_users tablosunda e-posta kontrolü
+                try
                 {
-                    return Ok(new
-                    {
-                        message = "Kayıt başarılı! 📧 Lütfen e-postanı doğrula ve SuperAdmin onayını bekle."
-                    });
+                    var existingPending = await client
+                        .From<PendingUser>()
+                        .Filter("email", Operator.Equals, model.Email)
+                        .Get();
+
+                    if (existingPending.Models.Count > 0)
+                        return BadRequest("Bu e-posta zaten onay bekleyenler listesinde var.");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"pending_users kontrolü sırasında hata oluştu: {ex.Message}");
                 }
 
+                // 🔍 3. users tablosunda e-posta kontrolü
+                try
+                {
+                    var existingUser = await client
+                        .From<TentecimApi.Models.User>()
+                        .Filter("email", Operator.Equals, model.Email)
+                        .Get();
+
+                    if (existingUser.Models.Count > 0)
+                        return BadRequest("Bu e-posta ile zaten kayıt yapılmış.");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"users kontrolü sırasında hata oluştu: {ex.Message}");
+                }
+
+                // 🔐 4. Supabase Auth ile kullanıcı oluştur
+                Session signUpResponse;
+                try
+                {
+                    signUpResponse = await client.Auth.SignUp(model.Email, model.Password);
+
+                    if (signUpResponse.User == null)
+                        return BadRequest("Kayıt sırasında bir hata oluştu (Auth). Kullanıcı oluşturulamadı.");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Supabase Auth kayıt hatası: {ex.Message}");
+                }
+                // 🧠 Şifreyi hashleyelim
+                var hasher = new PasswordHasher<string>();
+                string hashedPassword = hasher.HashPassword(null, model.Password);
+                // 🧾 5. pending_users tablosuna ekleme yapılır
+                var newUser = new PendingUser
+                {
+                    Id = default,
+                    Username = model.Username,
+                    Email = model.Email,
+                    PasswordHash = hashedPassword,
+                    Role = model.Role,
+                    FirmId = model.FirmId,
+                    ParentAdminId = model.ParentAdminId,
+                    City = model.City,
+                    Country = model.Country,
+                    Currency = model.Currency,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                try
+                {
+                    var insertResponse = await client
+                        .From<PendingUser>()
+                        .Insert(newUser);
+
+                    if (insertResponse.Models != null)
+                    {
+                        return Ok(new
+                        {
+                            message = "Kayıt başarılı! 📧 Lütfen e-postanı doğrula ve SuperAdmin onayını bekle."
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Veritabanına kayıt sırasında hata oluştu: {ex.Message}");
+                }
+
+                // ❌ Normalde bu noktaya gelinmemeli
                 return BadRequest("Kayıt veritabanına eklenemedi.");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
+                return StatusCode(500, $"Genel kayıt hatası: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region LOGIN METODU - Giriş işlemi (SuperAdmin / Admin / User)
+
+        /// <summary>
+        /// Kullanıcı girişi. E-posta + şifre + rol + (opsiyonel) rememberMe ve device_token ile çalışır.
+        /// </summary>
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            try
+            {
+                var client = _supabaseService.GetClient();
+
+                // 🔍 1. Kullanıcıyı email + role ile bul
+                var existingUserResponse = await client
+                    .From<TentecimApi.Models.User>()
+                    .Filter("email", Operator.Equals, model.Email)
+                    .Filter("role", Operator.Equals, model.Role)
+                    .Get();
+
+                var user = existingUserResponse.Models.FirstOrDefault();
+                if (user == null)
+                {
+                    await LogLogin(model.Email, "failed", "E-posta ya da rol hatalı.");
+                    return Unauthorized("E-posta ya da rol hatalı.");
+                }
+
+                // 🔐 2. Şifre doğrulaması (hash karşılaştırması)
+                var hasher = new PasswordHasher<string>();
+                var result = hasher.VerifyHashedPassword(null, user.hashedPassword, model.hashedPassword);
+                if (result == PasswordVerificationResult.Failed)
+                {
+                    await LogLogin(model.Email, "failed", "Şifre hatalı.");
+                    return Unauthorized("Şifre hatalı.");
+                }
+
+                // ✅ 3. Giriş başarılı, device hatırlanacaksa trusted_devices tablosuna kayıt
+                if (model.RememberMe && !string.IsNullOrWhiteSpace(model.DeviceToken))
+                {
+                    var existingDevice = await client
+                        .From<TrustedDevice>()
+                        .Filter("device_token", Operator.Equals, model.DeviceToken)
+                        .Filter("user_id", Operator.Equals, user.Id.ToString())
+                        .Get();
+
+                    if (existingDevice.Models.Count == 0)
+                    {
+                        var trustedDevice = new TrustedDevice
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            DeviceToken = model.DeviceToken,
+                            IpAddress = Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                                         ?? HttpContext.Connection.RemoteIpAddress?.ToString(),
+                            UserAgent = Request.Headers["User-Agent"].ToString(),
+                            CreatedAt = DateTime.UtcNow,
+                            ExpiresAt = DateTime.UtcNow.AddDays(30),
+                            IsActive = true
+                        };
+
+                        await client.From<TrustedDevice>().Insert(trustedDevice);
+                    }
+                }
+
+                // ✅ 4. Giriş başarılı logu
+                await LogLogin(model.Email, "success", "Giriş başarılı.");
+
+                // 🧾 5. Giriş yanıtı
+                return Ok(new
+                {
+                    message = "Giriş başarılı",
+                    token = Guid.NewGuid(),
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        role = user.Role,
+                        username = user.Username
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                await LogLogin(model.Email, "failed", $"Sunucu hatası: {ex.Message}");
+                return StatusCode(500, $"Giriş hatası: {ex.Message}");
             }
         }
 
 
         #endregion
+
+        #region FORGOT PASSWORD - Şifre sıfırlama kodu gönderimi
+
+        /// <summary>
+        /// Kullanıcının e-posta ve rol bilgisine göre şifre sıfırlama kodu gönderilir.
+        /// </summary>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest model)
+        {
+            try
+            {
+                var client = _supabaseService.GetClient();
+
+                // 🔍 Kullanıcıyı kontrol et
+                var userResponse = await client
+                    .From<TentecimApi.Models.User>()
+                    .Filter("email", Operator.Equals, model.Email)
+                    .Filter("role", Operator.Equals, model.Role)
+                    .Get();
+
+                var user = userResponse.Models.FirstOrDefault();
+                if (user == null)
+                    return NotFound("Bu bilgilere ait kullanıcı bulunamadı.");
+
+                // 🔐 Kod üret
+                var code = new Random().Next(100000, 999999).ToString(); // 6 haneli kod
+                var expiresAt = DateTime.UtcNow.AddMinutes(10);
+
+                // 💾 password_resets tablosuna kayıt
+                var resetRecord = new PasswordReset
+                {
+                    Id = Guid.NewGuid(),
+                    Email = model.Email,
+                    Role = model.Role,
+                    Code = code,
+                    ExpiresAt = expiresAt,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await client.From<PasswordReset>().Insert(resetRecord);
+
+                // 📝 Geliştirme süreci için log'a yaz
+                Console.WriteLine($"[Şifre Sıfırla] {model.Email} ({model.Role}) → Kod: {code} (geçerlilik: 10dk)");
+
+                return Ok(new
+                {
+                    message = "Şifre sıfırlama kodu e-posta adresinize gönderildi.",
+                    // code = code // test aşamasında gösterilebilir, canlıda gösterilmez
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Şifre sıfırlama isteği başarısız: {ex.Message}");
+            }
+        }
+
+
+        #endregion
+
+        #region RESET PASSWORD - Şifre sıfırlama kodunu doğrula ve şifreyi güncelle
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest model)
+        {
+            try
+            {
+                var client = _supabaseService.GetClient();
+
+                // 🔍 1. Kodun geçerli olup olmadığını kontrol et
+                var codeCheck = await client
+                    .From<PasswordReset>()
+                    .Filter("email", Operator.Equals, model.Email)
+                    .Filter("role", Operator.Equals, model.Role)
+                    .Filter("code", Operator.Equals, model.Code)
+                    .Get();
+
+                var codeRecord = codeCheck.Models.FirstOrDefault();
+
+                if (codeRecord == null)
+                    return BadRequest("Kod geçersiz veya bulunamadı.");
+
+                if (codeRecord.ExpiresAt < DateTime.UtcNow)
+                    return BadRequest("Kodun süresi dolmuş.");
+
+                // 🔐 2. Şifreyi hashle
+                var hasher = new PasswordHasher<string>();
+                var hashedPassword = hasher.HashPassword(null, model.NewPassword);
+
+                // 🔄 3. Kullanıcının şifresini güncelle
+                var userResponse = await client
+                    .From<TentecimApi.Models.User>()
+                    .Filter("email", Operator.Equals, model.Email)
+                    .Filter("role", Operator.Equals, model.Role)
+                    .Get();
+
+                var user = userResponse.Models.FirstOrDefault();
+                if (user == null)
+                    return NotFound("Kullanıcı bulunamadı.");
+
+                user.hashedPassword = hashedPassword;
+                await client.From<TentecimApi.Models.User>().Update(user);
+                // ✅ Şifre sıfırlama logunu yaz
+                await LogPasswordReset(
+                    email: model.Email,
+                    role: model.Role,
+                    firmId: user.FirmId, // null olabilir, sorun değil
+                    action: "reset_success",
+                    status: "success",
+                    message: "Şifre başarıyla güncellendi."
+                );
+                // 🧹 4. Kod kaydını temizle (isteğe bağlı)
+                await client.From<PasswordReset>().Delete(codeRecord);
+
+                return Ok(new
+                {
+                    message = "Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Şifre sıfırlama başarısız: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region logın loglar ıcın yardımcı 
+        private async Task LogLogin(string email, string status, string message)
+        {
+            try
+            {
+                var client = _supabaseService.GetClient();
+                var ip = Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                         ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+                var agent = Request.Headers["User-Agent"].ToString();
+
+                var log = new LoginLog
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    Status = status,
+                    Message = message,
+                    IpAddress = ip,
+                    UserAgent = agent,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await client.From<LoginLog>().Insert(log);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Login log yazılamadı: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region SIFRE SIFIRLAMA LOG
+        private async Task LogPasswordReset(string email, string role, Guid? firmId, string action, string status, string message)
+        {
+            try
+            {
+                var client = _supabaseService.GetClient();
+                var ip = Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                         ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+                var agent = Request.Headers["User-Agent"].ToString();
+
+                var log = new PasswordResetLog
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    Role = role,
+                    FirmId = firmId,
+                    Action = action,
+                    Status = status,
+                    Message = message,
+                    IpAddress = ip,
+                    UserAgent = agent,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await client.From<PasswordResetLog>().Insert(log);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Şifre sıfırlama logu yazılamadı: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        [HttpPost("send-reset-code")]
+        public async Task<IActionResult> SendResetCode([FromBody] EmailRequest request)
+        {
+            var client = _supabaseService.GetClient();
+
+            // 🧠 Kullanıcı kayıtlı mı?
+            var userResponse = await client
+                .From<TentecimApi.Models.User>()
+                .Filter("email", Operator.Equals, request.Email)
+                .Filter("role", Operator.Equals, request.Role)
+                .Get();
+
+            var user = userResponse.Models.FirstOrDefault();
+            if (user == null)
+                return BadRequest("Bu e-posta ile kayıtlı bir kullanıcı bulunamadı.");
+
+            // 🔁 Rate limit kontrolü
+            var lastCode = await client
+                .From<PasswordReset>()
+                .Filter("email", Operator.Equals, request.Email)
+                .Order("created_at", Ordering.Descending)
+                .Limit(1)
+                .Get();
+
+            if (lastCode.Models.Count > 0 && (DateTime.UtcNow - lastCode.Models[0].CreatedAt).TotalMinutes < 1)
+                return BadRequest("Lütfen 1 dakika sonra tekrar deneyin.");
+
+            // ✅ Kod üret
+            var code = new Random().Next(100000, 999999).ToString();
+            var reset = new PasswordReset
+            {
+                Id = Guid.NewGuid(),
+                Email = request.Email,
+                Code = code,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            };
+
+            await client.From<PasswordReset>().Insert(reset);
+
+            // ✅ Kod e-posta gönderimi
+            try
+            {
+                var smtpUser = _configuration["Smtp:User"];
+                var smtpPass = _configuration["Smtp:Password"];
+
+                var smtpClient = new SmtpClient("smtp.gmail.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true,
+                };
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(smtpUser, "TENTECIMAPP"),
+                    Subject = "Şifre Sıfırlama Kodunuz",
+                    Body = $"Şifre sıfırlama kodunuz: {code}\nBu kod 5 dakika geçerlidir.",
+                    IsBodyHtml = false,
+                };
+
+                mailMessage.To.Add(request.Email);
+                await smtpClient.SendMailAsync(mailMessage);
+
+                // ✅ Log ekle
+                await LogPasswordReset(
+                    email: request.Email,
+                    role: request.Role,
+                    firmId: user.FirmId,
+                    action: "code_sent",
+                    status: "success",
+                    message: "Şifre sıfırlama kodu gönderildi"
+                );
+
+                return Ok("Kod gönderildi.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Kod gönderildi ama e-posta başarısız: {ex.Message}");
+            }
+        }
+
+
 
     }
 }

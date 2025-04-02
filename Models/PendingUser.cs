@@ -17,58 +17,70 @@ namespace TentecimApi.Models
         public string Email { get; set; }
 
         [Column("password")]
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
 
-        [Column("company_name")]
-        public string CompanyName { get; set; }
+        [Column("phone")]
+        public string Phone { get; set; }
 
         [Column("role")]
         public string Role { get; set; }
 
+        [Column("company_name")]
+        public string CompanyName { get; set; }
+
+        [Column("firm_id")]
+        public Guid? FirmId { get; set; }
+
+        [Column("parent_admin_id")]
+        public Guid? ParentAdminId { get; set; }
+
+        [Column("city")]
+        public string City { get; set; }
+
+        [Column("country")]
+        public string Country { get; set; }
+
+        [Column("currency")]
+        public string Currency { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
 
-        /// <summary>
-        /// Kullanıcı bilgilerinin geçerli olup olmadığını kontrol eder.
-        /// </summary>
-        public bool IsValid(out string errorMessage)
+        public bool IsValid(out string errorMessage, int step)
         {
-            if (string.IsNullOrWhiteSpace(Email))
+            errorMessage = "";
+
+            if (step >= 1)
             {
-                errorMessage = "E-posta boş olamaz.";
-                return false;
+                if (string.IsNullOrWhiteSpace(Role))
+                    errorMessage = "Rol seçimi yapılmalı.";
+                else if (Role.ToLower() == "admin" && FirmId == null)
+                    errorMessage = "Admin için firma seçimi yapılmalı.";
+                else if (Role.ToLower() == "user" && FirmId == null)
+                    errorMessage = "Kullanıcı için firma seçimi yapılmalı.";
             }
 
-            if (string.IsNullOrWhiteSpace(Password))
+            if (step >= 2)
             {
-                errorMessage = "Şifre boş olamaz.";
-                return false;
+                if (Role.ToLower() == "user" && ParentAdminId == null)
+                    errorMessage = "Kullanıcı için admin seçimi yapılmalı.";
             }
 
-            if (string.IsNullOrWhiteSpace(Role))
+            if (step >= 3)
             {
-                errorMessage = "Rol boş olamaz.";
-                return false;
+                if (string.IsNullOrWhiteSpace(Email))
+                    errorMessage = "E-posta adresi girilmeli.";
             }
 
-            if (Role.ToLower() == "admin")
+            if (step >= 4)
             {
                 if (string.IsNullOrWhiteSpace(Username))
-                {
-                    errorMessage = "Admin kullanıcıları için kullanıcı adı zorunludur.";
-                    return false;
-                }
-
-                if (string.IsNullOrWhiteSpace(CompanyName))
-                {
-                    errorMessage = "Firma adı boş olamaz.";
-                    return false;
-                }
+                    errorMessage = "Kullanıcı adı boş olamaz.";
+                else if (string.IsNullOrWhiteSpace(PasswordHash))
+                    errorMessage = "Şifre boş olamaz.";
             }
 
-            // user rolünde username boş olabilir, sonradan girilecek
-            errorMessage = null;
-            return true;
+            return string.IsNullOrEmpty(errorMessage);
         }
     }
 }

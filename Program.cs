@@ -10,7 +10,8 @@ var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env.local");
 Env.Load(envPath); // .env.local dosyasını yükle
 
 var builder = WebApplication.CreateBuilder(args);
-
+// ✅ SMTP bilgilerini buradan okuyabilmek için appsettings.json yükleniyor
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 // 🌐 Servisleri ekle
 builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddControllers();

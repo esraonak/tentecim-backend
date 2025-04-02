@@ -2,53 +2,55 @@
 {
     public class RegisterModel
     {
-        public string Username { get; set; }      // Ad soyad (user için isteğe bağlı)
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string Phone { get; set; }
-        public string Role { get; set; }          // "admin" veya "user"
-        public string CompanyName { get; set; }   // admin için zorunlu olabilir
+        public string Username { get; set; }             // step 4 - Ad Soyad
+        public string Email { get; set; }                // step 3
+        public string Password { get; set; }             // step 4
+        public string Role { get; set; }                 // step 1
+        public Guid? FirmId { get; set; }                // step 1
+        public Guid? ParentAdminId { get; set; }         // step 2
 
-        /// <summary>
-        /// Formdan gelen verilerin doğruluğunu kontrol eder
-        /// </summary>
-        public bool IsValid(out string errorMessage)
+        public string City { get; set; }                 // step 4
+        public string Country { get; set; }              // step 4
+        public string Currency { get; set; }             // step 4
+
+        // Step adımlarına göre validasyon
+        public bool IsValid(out string errorMessage, int step)
         {
-            if (string.IsNullOrWhiteSpace(Email))
+            errorMessage = "";
+
+            if (step >= 1)
             {
-                errorMessage = "E-posta adresi boş olamaz.";
-                return false;
+                if (string.IsNullOrWhiteSpace(Role))
+                    errorMessage = "Rol seçimi yapılmalı.";
+                else if (Role.ToLower() == "admin" && FirmId == null)
+                    errorMessage = "Admin için firma seçimi yapılmalı.";
+                else if (Role.ToLower() == "user" && FirmId == null)
+                    errorMessage = "Kullanıcı için firma seçimi yapılmalı.";
             }
 
-            if (string.IsNullOrWhiteSpace(Password))
+            if (step >= 2)
             {
-                errorMessage = "Şifre boş olamaz.";
-                return false;
+                if (Role.ToLower() == "user" && ParentAdminId == null)
+                    errorMessage = "Kullanıcı için admin seçimi yapılmalı.";
             }
 
-            if (string.IsNullOrWhiteSpace(Role))
+            if (step >= 3)
             {
-                errorMessage = "Rol seçimi yapılmalı.";
-                return false;
+                if (string.IsNullOrWhiteSpace(Email))
+                    errorMessage = "E-posta adresi girilmeli.";
             }
 
-            if (Role.ToLower() == "admin")
+            if (step >= 4)
             {
-                if (string.IsNullOrWhiteSpace(CompanyName))
-                {
-                    errorMessage = "Firma adı boş olamaz.";
-                    return false;
-                }
-
                 if (string.IsNullOrWhiteSpace(Username))
-                {
-                    errorMessage = "Admin için kullanıcı adı boş olamaz.";
-                    return false;
-                }
+                    errorMessage = "Kullanıcı adı boş olamaz.";
+                else if (string.IsNullOrWhiteSpace(Password))
+                    errorMessage = "Şifre boş olamaz.";
+                else if (Password.Length < 6)
+                    errorMessage = "Şifre en az 6 karakter olmalıdır.";
             }
 
-            errorMessage = null;
-            return true;
+            return string.IsNullOrEmpty(errorMessage);
         }
     }
 }

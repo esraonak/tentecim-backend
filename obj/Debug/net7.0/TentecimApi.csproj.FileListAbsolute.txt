@@ -1,0 +1,8 @@
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.csproj.AssemblyReference.cache
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.GeneratedMSBuildEditorConfig.editorconfig
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.AssemblyInfoInputs.cache
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.AssemblyInfo.cs
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.csproj.CoreCompileInputs.cache
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.MvcApplicationPartsAssemblyInfo.cs
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.MvcApplicationPartsAssemblyInfo.cache
+D:\D\tentecim-backend\TentecimApi\obj\Debug\net7.0\TentecimApi.sourcelink.json
