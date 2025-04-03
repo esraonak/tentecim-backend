@@ -6,19 +6,21 @@ using DotNetEnv;
 using System.IO;
 using Microsoft.OpenApi.Models;
 
+#region 🌱 Ortam Değişkenlerini Yükle (.env.local)
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env.local");
-Env.Load(envPath); // .env.local dosyasını yükle
+Env.Load(envPath);
+#endregion
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ SMTP bilgilerini buradan okuyabilmek için appsettings.json yükleniyor
+#region 🔧 Yapılandırma (appsettings.json)
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+#endregion
 
-// 🌐 Servisleri ekle
+#region 🌐 Servisleri Tanımla
 builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ Swagger için gerekli
-
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -27,28 +29,30 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 });
+#endregion
 
-// ✅ CORS Politikası (Canlı ortam için Vercel domain tanımlı)
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+#region 🔓 CORS Politikası
+var corsPolicyName = "AllowFrontendOrigins";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
+    options.AddPolicy(name: corsPolicyName, policy =>
     {
         policy
             .WithOrigins(
-                "https://tentecim-frontend.vercel.app",  // 🌍 Canlı frontend domainin
-               "http://localhost:3000",            // Lokal geliştirme
-               "http://localhost:3001"            // Eğer 3001'de çalışıyorsan bu olmalı!                 // 🧪 Lokal geliştirme
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "https://tentecim-frontend.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+#endregion
 
 var app = builder.Build();
 
-// ✅ Swagger sadece geliştirme ortamında çalışır
+#region 🧪 Swagger (Sadece Geliştirme Ortamı)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -58,13 +62,15 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "swagger";
     });
 }
+#endregion
 
-// ✅ Middleware sıralaması önemli
-app.UseCors(MyAllowSpecificOrigins); // İlk sırada olmalı
+#region 🧱 Middleware Sıralaması Önemli
+app.UseCors(corsPolicyName); // ✅ İlk sıralarda olmalı
 app.UseAuthorization();
-app.MapControllers(); // Tüm Controller'ları aktif et
+app.MapControllers();
+#endregion
 
-// ✅ Örnek endpoint (geliştirme/test amaçlı)
+#region 🔁 Test Endpoint (Opsiyonel)
 app.MapGet("/weatherforecast", () =>
 {
     var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
@@ -74,11 +80,13 @@ app.MapGet("/weatherforecast", () =>
             Random.Shared.Next(-20, 55),
             summaries[Random.Shared.Next(summaries.Length)]
         )).ToArray();
+
     return forecast;
 })
 .WithName("GetWeatherForecast");
+#endregion
 
-// ✅ Supabase test endpoint
+#region ✅ Supabase Bağlantı Testi (Opsiyonel)
 app.MapGet("/supabase-check", async (SupabaseService supabaseService) =>
 {
     try
@@ -97,11 +105,13 @@ app.MapGet("/supabase-check", async (SupabaseService supabaseService) =>
         return Results.Problem("Supabase bağlantısı başarısız: " + ex.Message);
     }
 });
+#endregion
 
 app.Run();
 
-// ✅ WeatherForecast record tanımı
+#region 🌤 WeatherForecast record (Demo amaçlı)
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+#endregion
