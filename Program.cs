@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using DotNetEnv;
 using System.IO;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json; // Eklemeye gerek yok ama bilmen adına yazıldı
 
 #region 🌱 Ortam Değişkenlerini Yükle (.env.local)
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env.local");
@@ -19,7 +20,10 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 
 #region 🌐 Servisleri Tanımla
 builder.Services.AddSingleton<SupabaseService>();
-builder.Services.AddControllers();
+builder.Services.AddScoped<AuthService>();
+// 🔧 System.Text.Json yerine Newtonsoft.Json kullan
+builder.Services.AddControllers().AddNewtonsoftJson();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -45,7 +49,8 @@ builder.Services.AddCors(options =>
                 "https://tentecim-frontend.vercel.app"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 #endregion
@@ -53,6 +58,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 #region 🧪 Swagger (Sadece Geliştirme Ortamı)
+/*
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -61,13 +67,16 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Tentecim API v1");
         options.RoutePrefix = "swagger";
     });
-}
+}*/
+
 #endregion
 
 #region 🧱 Middleware Sıralaması Önemli
-app.UseCors(corsPolicyName); // ✅ İlk sıralarda olmalı
+app.UseHttpsRedirection();       // ✅ bu eklendi
+app.UseCors(corsPolicyName);     // ✅ üstte
 app.UseAuthorization();
 app.MapControllers();
+
 #endregion
 
 #region 🔁 Test Endpoint (Opsiyonel)

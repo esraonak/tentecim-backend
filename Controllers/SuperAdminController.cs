@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using TentecimApi.Models;
 using TentecimApi.Services;
+using Microsoft.AspNetCore.Identity;
+using static Supabase.Postgrest.Constants;
 
 namespace TentecimApi.Controllers
 {
@@ -10,14 +12,17 @@ namespace TentecimApi.Controllers
     public class SuperAdminController : ControllerBase
     {
         private readonly SupabaseService _supabaseService;
+        private readonly AuthService _authService;
 
-        // 🧩 DI (Dependency Injection) ile servis enjekte edilir
-        public SuperAdminController(SupabaseService supabaseService)
+        // 🧩 DI (Dependency Injection) ile servisler enjekte edilir
+        public SuperAdminController(SupabaseService supabaseService, AuthService authService)
         {
             _supabaseService = supabaseService;
+            _authService = authService;
         }
+
         // =============================================
-        // 📊 4. Dashboard için firma/admin/user sayısı
+        // 📊 Dashboard İstatistikleri
         // Route: GET /api/superadmin/stats
         // =============================================
         [HttpGet("stats")]
@@ -49,31 +54,65 @@ namespace TentecimApi.Controllers
             }
         }
 
-        #region ✅ 1. Tüm Onay Bekleyen Kullanıcıları Listele
-        // Route: GET /api/superadmin/pending-users
-        // Amaç: Supabase içindeki pending_users tablosundan kayıtları çekmek
+        // =============================================
+        // 🔑 SuperAdmin Login
+        // Route: POST /api/superadmin/login
+        // =============================================
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            var result = await _authService.LoginAsync(model.Email, model.Password, "superadmin", model.DeviceToken);
+
+            if (!result.Success)
+                return Unauthorized(result.Message);
+
+            return Ok(new
+            {
+                message = result.Message,
+                user = new
+                {
+                    id = result.User.Id,
+                    email = result.User.Email,
+                    username = result.User.Username,
+                    role = result.User.Role
+                }
+            });
+        }
+
+        #region ✅ 1. Tüm Onay Bekleyen Kullanıcılar
         [HttpGet("pending-users")]
         public async Task<IActionResult> GetAllPendingUsers()
         {
             try
             {
                 var users = await _supabaseService.GetAllPendingUsersAsync();
-                return Ok(users); // 200 OK + kullanıcı listesi
+
+                var cleanedUsers = users.Select(u => new
+                {
+                    u.Id,
+                    u.Username,
+                    u.Email,
+                    u.Phone,
+                    u.Role,
+                    u.Country,
+                    u.City,
+                    u.Currency,
+                    u.FirmId,
+                    u.ParentAdminId,
+                    u.CompanyName,
+                    u.CreatedAt
+                });
+
+                return Ok(cleanedUsers);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = "Veri alınamadı",
-                    detail = ex.Message
-                });
+                return StatusCode(500, new { error = "Veri alınamadı", detail = ex.Message });
             }
         }
         #endregion
 
-        #region ❌ 2. Kullanıcıyı Reddet (Sil)
-        // Route: DELETE /api/superadmin/pending-users/{id}
-        // Amaç: Belirli bir ID ile pending_users kaydını silmek
+        #region ❌ 2. Onay Bekleyen Kullanıcıyı Sil
         [HttpDelete("pending-users/{id}")]
         public async Task<IActionResult> DeletePendingUser(Guid id)
         {
@@ -84,32 +123,21 @@ namespace TentecimApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = "Silme işlemi başarısız",
-                    detail = ex.Message
-                });
+                return StatusCode(500, new { error = "Silme başarısız", detail = ex.Message });
             }
         }
         #endregion
 
-        #region ✅ 3. Kullanıcıyı Onayla (Sisteme Aktar)
-        // Route: POST /api/superadmin/approve-user/{id}
-        // Amaç:
-        //   1. pending_users tablosundan veriyi al
-        //   2. users tablosuna ekle
-        //   3. pending_users'tan sil
+        #region ✅ 3. Kullanıcıyı Onayla
         [HttpPost("approve-user/{id}")]
         public async Task<IActionResult> ApprovePendingUser(Guid id)
         {
             try
             {
-                // 1. ID ile pending kayıt çekilir
                 var pendingUser = await _supabaseService.GetPendingUserByIdAsync(id);
                 if (pendingUser == null)
                     return NotFound(new { message = "Kullanıcı bulunamadı." });
 
-                // 2. User modeline dönüştürülür
                 var newUser = new User
                 {
                     Id = Guid.NewGuid(),
@@ -127,23 +155,14 @@ namespace TentecimApi.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // 3. users tablosuna eklenir
                 await _supabaseService.InsertApprovedUserAsync(newUser);
-
-                // 4. pending_users kaydı silinir
                 await _supabaseService.DeletePendingUserAsync(id);
-
-                // (Opsiyonel) 📧 Bilgilendirme e-postası gönderilebilir
 
                 return Ok(new { message = "Kullanıcı onaylandı ve sisteme eklendi." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = "Onaylama işlemi başarısız",
-                    detail = ex.Message
-                });
+                return StatusCode(500, new { error = "Onaylama hatası", detail = ex.Message });
             }
         }
         #endregion
