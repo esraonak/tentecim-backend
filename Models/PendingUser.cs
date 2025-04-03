@@ -16,8 +16,8 @@ namespace TentecimApi.Models
         [Column("email")]
         public string Email { get; set; }
 
-        [Column("password")]
-        public string PasswordHash { get; set; }
+        [Column("password")] // ✅ Buraya dikkat
+        public string Password { get; set; } // ❗ Artık PasswordHash değil
 
         [Column("phone")]
         public string Phone { get; set; }
@@ -76,7 +76,7 @@ namespace TentecimApi.Models
             {
                 if (string.IsNullOrWhiteSpace(Username))
                     errorMessage = "Kullanıcı adı boş olamaz.";
-                else if (string.IsNullOrWhiteSpace(PasswordHash))
+                else if (string.IsNullOrWhiteSpace(Password)) // ✅ Buraya da dikkat
                     errorMessage = "Şifre boş olamaz.";
             }
 

@@ -99,7 +99,7 @@ namespace TentecimApi.Controllers
                     Id = default,
                     Username = model.Username,
                     Email = model.Email,
-                    PasswordHash = hashedPassword,
+                    Password = hashedPassword,
                     Role = model.Role,
                     FirmId = model.FirmId,
                     ParentAdminId = model.ParentAdminId,

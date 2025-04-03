@@ -116,7 +116,7 @@ namespace TentecimApi.Controllers
                     Username = pendingUser.Username,
                     Email = pendingUser.Email,
                     Phone = pendingUser.Phone,
-                    hashedPassword = pendingUser.PasswordHash,
+                    hashedPassword = pendingUser.Password,
                     Role = pendingUser.Role,
                     CompanyName = pendingUser.CompanyName,
                     FirmId = pendingUser.FirmId,

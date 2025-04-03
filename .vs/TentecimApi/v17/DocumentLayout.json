@@ -3,32 +3,28 @@
   "WorkspaceRootPath": "D:\\D\\tentecim-backend\\TentecimApi\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\services\\supabaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:services\\supabaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\models\\pendinguser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:models\\pendinguser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\controllers\\superadmincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:controllers\\superadmincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\models\\pendinguser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:models\\pendinguser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\models\\usermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:models\\usermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\services\\supabaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:services\\supabaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\models\\registermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:models\\registermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|d:\\d\\tentecim-backend\\tentecimapi\\models\\usermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D2334F30-6E78-CFC2-0758-4CF63CFBDAC3}|TentecimApi.csproj|solutionrelative:models\\usermodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,11 +34,51 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PendingUser.cs",
+              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\PendingUser.cs",
+              "RelativeDocumentMoniker": "Models\\PendingUser.cs",
+              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\PendingUser.cs",
+              "RelativeToolTip": "Models\\PendingUser.cs",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAuwFIAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-02T23:17:04.561Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
+              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Controllers\\AuthController.cs",
+              "ViewState": "AgIAAFgAAAAAAAAAAAAewGUAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T03:13:12.053Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 4,
+              "Title": "RegisterModel.cs",
+              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\RegisterModel.cs",
+              "RelativeDocumentMoniker": "Models\\RegisterModel.cs",
+              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\RegisterModel.cs",
+              "RelativeToolTip": "Models\\RegisterModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T03:09:09.204Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "UserModel.cs",
               "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\UserModel.cs",
               "RelativeDocumentMoniker": "Models\\UserModel.cs",
@@ -54,75 +90,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "AuthController.cs",
-              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\AuthController.cs",
-              "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
-              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\AuthController.cs",
-              "RelativeToolTip": "Controllers\\AuthController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-03T01:03:32.239Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "SupabaseService.cs",
               "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Services\\SupabaseService.cs",
               "RelativeDocumentMoniker": "Services\\SupabaseService.cs",
               "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Services\\SupabaseService.cs",
               "RelativeToolTip": "Services\\SupabaseService.cs",
-              "ViewState": "AgIAACgAAAAAAAAAAAAuwEwAAABPAAAAAAAAAA==",
+              "ViewState": "AgIAAEYAAAAAAAAAAAAuwIcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-02T23:28:44.28Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\appsettings.json",
-              "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\appsettings.json",
-              "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-04-02T23:21:29.416Z"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAACEAAAAAAAAAAAAwwC4AAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-02T23:20:33.719Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "PendingUser.cs",
-              "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\PendingUser.cs",
-              "RelativeDocumentMoniker": "Models\\PendingUser.cs",
-              "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Models\\PendingUser.cs",
-              "RelativeToolTip": "Models\\PendingUser.cs",
-              "ViewState": "AgIAAD0AAAAAAAAAAAAuwFYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-02T23:17:04.561Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "SuperAdminController.cs",
               "DocumentMoniker": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\SuperAdminController.cs",
               "RelativeDocumentMoniker": "Controllers\\SuperAdminController.cs",
               "ToolTip": "D:\\D\\tentecim-backend\\TentecimApi\\Controllers\\SuperAdminController.cs",
               "RelativeToolTip": "Controllers\\SuperAdminController.cs",
-              "ViewState": "AgIAADMAAAAAAAAAAAAAADsAAABNAAAAAAAAAA==",
+              "ViewState": "AgIAAH4AAAAAAAAAAAAuwJcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-02T08:57:58.363Z",
               "EditorCaption": ""
