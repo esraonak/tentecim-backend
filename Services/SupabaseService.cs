@@ -5,19 +5,22 @@ using Supabase.Postgrest;
 using Supabase.Postgrest.Models;
 using Supabase.Realtime;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using TentecimApi.Models; // PendingUser modelin burada
+using TentecimApi.Models; // ✅ PendingUser modelin burada tanımlı
 
 namespace TentecimApi.Services
 {
     public class SupabaseService
     {
+        // 🌐 Supabase Client örneği (tek noktadan erişim için private saklanır)
         private readonly Supabase.Client _client;
 
-        // 🧩 Constructor: Bağlantıyı başlatıyor
+        #region Constructor
+        // 🧩 Constructor: Supabase bağlantısını başlatır
         public SupabaseService(IConfiguration configuration)
         {
-            // .env.local dosyasından bilgileri al
+            // .env.local dosyasından Supabase URL ve Key bilgisini alır
             var url = Env.GetString("SUPABASE_URL");
             var key = Env.GetString("SUPABASE_ANON_KEY");
 
@@ -29,18 +32,21 @@ namespace TentecimApi.Services
                 AutoConnectRealtime = true
             };
 
-            // Supabase bağlantısını kur
+            // Supabase bağlantısını kurar ve başlatır
             _client = new Supabase.Client(url, key, options);
-            _client.InitializeAsync().Wait(); // Bağlantıyı senkron başlat
+            _client.InitializeAsync().Wait(); // ⛔ Senkron başlatılır (geliştirici ortamı için uygundur)
         }
+        #endregion
 
-        // 💾 Supabase Client erişimi
+        #region Client Erişimi
+        // 💾 Supabase Client'a dışarıdan erişim sağlamak için kullanılır
         public Supabase.Client GetClient()
         {
             return _client;
         }
+        #endregion
 
-        // ✅ pending_users tablosuna veri ekleme
+        #region INSERT → pending_users tablosuna yeni kullanıcı ekleme
         public async Task InsertPendingUserAsync(PendingUser user)
         {
             try
@@ -54,5 +60,25 @@ namespace TentecimApi.Services
                 throw;
             }
         }
+        #endregion
+
+        #region GET → Tüm pending_users verilerini listele
+        public async Task<List<PendingUser>> GetAllPendingUsersAsync()
+        {
+            var response = await _client.From<PendingUser>().Get();
+            return response.Models;
+        }
+        #endregion
+
+        #region DELETE → ID'ye göre pending user sil
+        public async Task DeletePendingUserAsync(Guid id)
+        {
+            await _client
+                .From<PendingUser>()
+                .Where(p => p.Id == id)
+                .Delete();
+        }
+
+        #endregion
     }
 }

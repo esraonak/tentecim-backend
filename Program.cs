@@ -38,7 +38,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "https://tentecim-frontend.vercel.app",  // 🌍 Canlı frontend domainin
-                "http://localhost:3000"                  // 🧪 Lokal geliştirme
+               "http://localhost:3000",            // Lokal geliştirme
+               "http://localhost:3001"            // Eğer 3001'de çalışıyorsan bu olmalı!                 // 🧪 Lokal geliştirme
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
