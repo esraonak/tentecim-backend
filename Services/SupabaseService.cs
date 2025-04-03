@@ -70,9 +70,20 @@ namespace TentecimApi.Services
         #region 📥 GET: Tüm pending_users verilerini listele
         public async Task<List<PendingUser>> GetAllPendingUsersAsync()
         {
-            var response = await _client.From<PendingUser>().Get();
-            return response.Models;
+            try
+            {
+                Console.WriteLine("⏳ pending_users tablosu çekiliyor...");
+                var response = await _client.From<PendingUser>().Get();
+                Console.WriteLine($"✅ {response.Models.Count} kayıt bulundu.");
+                return response.Models;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ pending_users verisi alınamadı: {ex.Message}");
+                throw;
+            }
         }
+
         #endregion
 
         #region ❌ DELETE: Belirli ID ile pending_user sil
