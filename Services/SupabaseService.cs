@@ -1,13 +1,12 @@
 using DotNetEnv;
 using Supabase;
-using Supabase.Gotrue;
 using Supabase.Postgrest;
 using Supabase.Postgrest.Models;
 using Supabase.Realtime;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TentecimApi.Models; // ✅ PendingUser modelin burada tanımlı
+using TentecimApi.Models; // ✅ Modeller burada tanımlı
 
 namespace TentecimApi.Services
 {
@@ -16,11 +15,10 @@ namespace TentecimApi.Services
         // 🌐 Supabase Client örneği (tek noktadan erişim için private saklanır)
         private readonly Supabase.Client _client;
 
-        #region Constructor
-        // 🧩 Constructor: Supabase bağlantısını başlatır
+        #region 🚀 Constructor: Supabase bağlantısını başlatır
         public SupabaseService(IConfiguration configuration)
         {
-            // .env.local dosyasından Supabase URL ve Key bilgisini alır
+            // .env.local dosyasından Supabase URL ve KEY al
             var url = Env.GetString("SUPABASE_URL");
             var key = Env.GetString("SUPABASE_ANON_KEY");
 
@@ -32,26 +30,33 @@ namespace TentecimApi.Services
                 AutoConnectRealtime = true
             };
 
-            // Supabase bağlantısını kurar ve başlatır
             _client = new Supabase.Client(url, key, options);
-            _client.InitializeAsync().Wait(); // ⛔ Senkron başlatılır (geliştirici ortamı için uygundur)
+            _client.InitializeAsync().Wait(); // ⛔ Geliştirme ortamı için senkron başlatma
         }
         #endregion
 
-        #region Client Erişimi
-        // 💾 Supabase Client'a dışarıdan erişim sağlamak için kullanılır
+        #region 💾 Supabase Client erişimi
         public Supabase.Client GetClient()
         {
             return _client;
         }
         #endregion
 
-        #region INSERT → pending_users tablosuna yeni kullanıcı ekleme
+        #region ✅ Tüm users tablosunu getir
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            var response = await _client.From<User>().Get();
+            return response.Models;
+        }
+        #endregion
+
+
+        #region ➕ INSERT: pending_users tablosuna kullanıcı ekle
         public async Task InsertPendingUserAsync(PendingUser user)
         {
             try
             {
-                var response = await _client.From<PendingUser>().Insert(user);
+                await _client.From<PendingUser>().Insert(user);
                 Console.WriteLine("✅ Kullanıcı pending_users tablosuna eklendi.");
             }
             catch (Exception ex)
@@ -62,7 +67,7 @@ namespace TentecimApi.Services
         }
         #endregion
 
-        #region GET → Tüm pending_users verilerini listele
+        #region 📥 GET: Tüm pending_users verilerini listele
         public async Task<List<PendingUser>> GetAllPendingUsersAsync()
         {
             var response = await _client.From<PendingUser>().Get();
@@ -70,7 +75,7 @@ namespace TentecimApi.Services
         }
         #endregion
 
-        #region DELETE → ID'ye göre pending user sil
+        #region ❌ DELETE: Belirli ID ile pending_user sil
         public async Task DeletePendingUserAsync(Guid id)
         {
             await _client
@@ -78,7 +83,42 @@ namespace TentecimApi.Services
                 .Where(p => p.Id == id)
                 .Delete();
         }
+        #endregion
 
+        #region 🔍 GET: Belirli bir pending_user'ı ID ile getir
+        public async Task<PendingUser?> GetPendingUserByIdAsync(Guid id)
+        {
+            try
+            {
+                var response = await _client
+                    .From<PendingUser>()
+                    .Where(u => u.Id == id)
+                    .Get();
+
+                return response.Models.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Kullanıcı getirilemedi: {ex.Message}");
+                throw;
+            }
+        }
+        #endregion
+
+        #region ✅ INSERT: pending_user'dan users tablosuna kayıt oluştur
+        public async Task InsertApprovedUserAsync(User newUser)
+        {
+            try
+            {
+                await _client.From<User>().Insert(newUser);
+                Console.WriteLine("✅ Kullanıcı users tablosuna eklendi.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Kullanıcı eklenemedi: {ex.Message}");
+                throw;
+            }
+        }
         #endregion
     }
 }
